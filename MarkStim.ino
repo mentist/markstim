@@ -1,5 +1,5 @@
 /*
-Version: 2013-09-23~2018-01-17
+Version: 2013-09-23~2018-02-05
 Author: Yong-Jun Lin
 
 References:
@@ -65,6 +65,10 @@ History:
  7. Wrote and put LED feedback code inside DEBUGGING mode.
  8. Allowed >16 ms TTL pulse width.
  9. Encoded the trigger value by char rather than by a string of number.
+2018-02-02
+ 1. Prepended 2^i for 4 rounds before 0~255 in the demo trigger mode.
+2018-02-05
+ 1. Fixed the wrong syntax 2^i to pow(2^7)
 
 Future:
  1. Test if 1 ms TTL can trigger TMS pulses
@@ -157,43 +161,6 @@ long TTLPulseWidth = 1000-DELAYOFDELAY;  // (microsec)
 // Command variables
 byte triggerVal = 0;
 
-void setup()
-{
-  // Initialize serial communication (actually USB if using Teensy)
-  Serial.begin(baudRate);
-  // Set pin mode
-  pinMode(pinLED, OUTPUT);
-  digitalWrite(pinLED, LED_ON);
-  pinMode(pinSwitch1, INPUT_PULLUP);
-  pinMode(pinSwitch2, INPUT_PULLUP);
-  pinMode(pinResetButton, INPUT_PULLUP);
-  pinMode(pinData, OUTPUT);
-  pinMode(pinClock, OUTPUT);
-  pinMode(pinLatch, OUTPUT);
-  // Reset shift register
-  update8BitShiftRegister(0);
-  return;
-}
-
-void loop()
-{
-  CheckDemoSwitch();
-  CheckReset();
-
-  char newByte = '\0';
-  if (Serial.available())
-  {
-    newByte = Serial.read();  // One byte at a time
-#ifdef DEBUGGING
-    Serial.println("Received a new byte.");
-#endif
-    if (state == 10)
-      Handshake(newByte);
-    else  //>= 20
-      RealDeal(newByte);
-  }
-  return;
-}
 
 void CheckDemoSwitch()
 {
@@ -206,6 +173,35 @@ void CheckDemoSwitch()
 #endif
     Demo();
   }
+}
+
+void update8BitShiftRegister(byte val)
+{
+  digitalWrite(pinLatch, LOW);     //Pulls the chips latch low
+  shiftOut(pinData, pinClock, MSBFIRST, val); //Shifts out the 8 bits to the shift register
+  digitalWrite(pinLatch, HIGH);   //Pulls the latch high displaying the data
+#ifdef DEBUGGING
+  bool bSwitch2 = digitalRead(pinSwitch2);
+  if (bSwitch2 == LOW)
+  {
+    digitalWrite(pinLED, LED_ON);
+    delay(LED_FEEDBACK_DUR); // 1 ms is sufficient for visible LED feedback upon trigger onset
+    digitalWrite(pinLED, LED_OFF);
+  }
+#endif
+}
+
+void ResetDevice()
+{
+  // The reset button on Teensy is for reset to bootloader, not for power-on reset.
+  // This function emulates power-on reset by software, so reset no longer requires unplugging and replugging the USB cable.
+  // Finalize serial communication
+  Serial.end();  // Must end() before begin()
+  // Reset shift register
+  update8BitShiftRegister(0);
+  // Reset (emulate Arduino style reset)
+  _restart_Teensyduino_();
+  return;
 }
 
 void CheckReset()
@@ -226,6 +222,42 @@ void Demo()
 {
   bool bSwitch1;
   digitalWrite(pinLED, LED_OFF);
+  // 2^0~2^7 for 4 rounds
+  for (int j = 0; j < 4; j++)
+  {
+    delay(250); // (ms)
+    triggerVal = 1;
+    update8BitShiftRegister(triggerVal);
+    delay(250); // (ms)
+    triggerVal = 2;
+    update8BitShiftRegister(triggerVal);
+    delay(250); // (ms)
+    triggerVal = 4;
+    update8BitShiftRegister(triggerVal);
+    delay(250); // (ms)
+    triggerVal = 8;
+    update8BitShiftRegister(triggerVal);
+    delay(250); // (ms)
+    triggerVal = 16;
+    update8BitShiftRegister(triggerVal);
+    delay(250); // (ms)
+    triggerVal = 32;
+    update8BitShiftRegister(triggerVal);
+    delay(250); // (ms)
+    triggerVal = 64;
+    update8BitShiftRegister(triggerVal);
+    delay(250); // (ms)
+    triggerVal = 128;
+    update8BitShiftRegister(triggerVal);
+    /*
+    for (int i = 0; i < 8; i++)
+    {
+      delay(250); // (ms)
+      triggerVal = pow(2, i);
+      update8BitShiftRegister(triggerVal);
+    */
+  }
+  // 0~255 for 1 round
   for (triggerVal = 0; triggerVal < 256; triggerVal++)
   {
     delay(250); // (ms)
@@ -405,7 +437,7 @@ void ResetBuffer()
 
 void SendTrigger(byte val)
 {
-  update8BitShiftRegister(val); 
+  update8BitShiftRegister(val);
   // From Brain Products: Recorder_Release_Notes_1-20-0801.pdf
   // Minimal length of trigger signal under 1000 Hz is 2 ms
   if (bTTL)
@@ -420,32 +452,41 @@ void SendTrigger(byte val)
   }
 }
 
-void update8BitShiftRegister(byte val)
+void setup()
 {
-  digitalWrite(pinLatch, LOW);     //Pulls the chips latch low
-  shiftOut(pinData, pinClock, MSBFIRST, val); //Shifts out the 8 bits to the shift register
-  digitalWrite(pinLatch, HIGH);   //Pulls the latch high displaying the data
-#ifdef DEBUGGING
-  bool bSwitch2 = digitalRead(pinSwitch2);
-  if (bSwitch2 == LOW)
-  {
-    digitalWrite(pinLED, LED_ON);
-    delay(LED_FEEDBACK_DUR); // 1 ms is sufficient for visible LED feedback upon trigger onset
-    digitalWrite(pinLED, LED_OFF);
-  }
-#endif
-}
-
-void ResetDevice()
-{
-  // The reset button on Teensy is for reset to bootloader, not for power-on reset.
-  // This function emulates power-on reset by software, so reset no longer requires unplugging and replugging the USB cable.
-  // Finalize serial communication
-  Serial.end();  // Must end() before begin()
+  // Initialize serial communication (actually USB if using Teensy)
+  Serial.begin(baudRate);
+  // Set pin mode
+  pinMode(pinLED, OUTPUT);
+  digitalWrite(pinLED, LED_ON);
+  pinMode(pinSwitch1, INPUT_PULLUP);
+  pinMode(pinSwitch2, INPUT_PULLUP);
+  pinMode(pinResetButton, INPUT_PULLUP);
+  pinMode(pinData, OUTPUT);
+  pinMode(pinClock, OUTPUT);
+  pinMode(pinLatch, OUTPUT);
   // Reset shift register
   update8BitShiftRegister(0);
-  // Reset (emulate Arduino style reset)
-  _restart_Teensyduino_();
+  return;
+}
+
+void loop()
+{
+  CheckDemoSwitch();
+  CheckReset();
+
+  char newByte = '\0';
+  if (Serial.available())
+  {
+    newByte = Serial.read();  // One byte at a time
+#ifdef DEBUGGING
+    Serial.println("Received a new byte.");
+#endif
+    if (state == 10)
+      Handshake(newByte);
+    else  //>= 20
+      RealDeal(newByte);
+  }
   return;
 }
 
