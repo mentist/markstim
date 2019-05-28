@@ -1,5 +1,5 @@
 /*
-Version: 2013-09-23~2018-01-16
+Version: 2013-09-23~2018-01-17
 Author: Yong-Jun Lin
 
 References:
@@ -59,6 +59,9 @@ History:
  1. Validated waveform by oscilloscope for each shift register outpun pin.
  2. Wrote SendTrigger() as a wrapper of update8BitShiftRegister().
  3. Discovered by an oscilloscope that the TTL Pulse Width cannot be smaller than 38 ms. No matter delay() or delayMicroseconds() is used and no matter the input value, the delay was constantly 38 ms for Teensy 2.0 and this program.
+ 4. Changed reset state ID. Added demo state ID.
+ 5. Defined function CheckReset() and CheckDemoSwitch().
+ 6. Considered the condition for restarting demo and the condition for stopping demo (back to waiting for handshake). Turns off LED when entering demo mode and turns it back on when leaving it.
 
 Future:
  1. Test if 1 ms TTL can trigger TMS pulses
@@ -123,7 +126,7 @@ const unsigned int pinLatch = 43;  //F5
 
 // State variable and constants of the machine
 /*
-// From overview.txt
+From Protocol.txt:
   state description
   10    waiting for handshake
   11    received !
@@ -133,12 +136,11 @@ const unsigned int pinLatch = 43;  //F5
   35    doing settings
   41    heard command
   45    doing task ()
-  51    heard reset
+  71    heard demo
+  91    heard reset
 */
 unsigned char state = 10;
-bool bSwitch1 = HIGH;
 bool bSwitch2 = HIGH;
-bool bResetButton = HIGH;
 
 // String buffer for serial communication
 char buffer[BUFSIZE] = "\0";
@@ -169,17 +171,10 @@ void setup()
 
 void loop()
 {
-  bSwitch1 = digitalRead(pinSwitch1);
   bSwitch2 = digitalRead(pinSwitch2);
-  bResetButton = digitalRead(pinResetButton);
 
-  if (bResetButton == LOW)
-  {
-#ifdef DEBUGGING
-    Serial.println("Reset device.");
-#endif
-    ResetDevice();
-  }
+  CheckDemoSwitch();
+  CheckReset();
 
   char newByte = '\0';
   if (Serial.available())
@@ -192,6 +187,67 @@ void loop()
       Handshake(newByte);
     else  //>= 20
       RealDeal(newByte);
+  }
+  return;
+}
+
+void CheckDemoSwitch()
+{
+  bool bSwitch1 = digitalRead(pinSwitch1);
+  if (bSwitch1 == LOW)
+  {
+    state = 71;
+#ifdef DEBUGGING
+    Serial.println("Shift register demo (cyclic 0~255).");
+#endif
+    Demo();
+  }
+}
+
+void CheckReset()
+{
+  bool bResetButton = digitalRead(pinResetButton);
+  if (bResetButton == LOW)
+  {
+    state = 91;
+#ifdef DEBUGGING
+    Serial.println("Reset device.");
+#endif
+    ResetDevice();
+  }
+  return;
+}
+
+void Demo()
+{
+  bool bSwitch1;
+  digitalWrite(pinLED, LED_OFF);
+  for (triggerVal = 0; triggerVal < 256; triggerVal++)
+  {
+    delay(250); // (ms)
+    update8BitShiftRegister(triggerVal);
+    //So the Q0 (2^0) pin will have square waves at 4 Hz
+    //So the Q1 (2^1) pin will have square waves at 2 Hz
+    //So the Q2 (2^2) pin will have square waves at 1 Hz
+    //So the Q3 (2^3) pin will have square waves at 0.5 Hz
+    //So the Q4 (2^4) pin will have square waves at 0.25 Hz
+    //So the Q5 (2^5) pin will have square waves at 0.125 Hz
+    //So the Q6 (2^5) pin will have square waves at 0.0625 Hz
+    //So the Q7 (2^5) pin will have square waves at 0.03125 Hz
+    //Use an oscilloscope to verify
+    //Or use a EEG trigger monitor to view if the trigger values are in cycles of 0~255 (usually 0 is not recorded, indiciating no events at all)
+
+    //Condition for restarting demo
+    CheckReset();
+
+    //Condition for exiting demo
+    bSwitch1 = digitalRead(pinSwitch1);
+    if (bSwitch1 == HIGH)
+    {
+      digitalWrite(pinLED, LED_ON);
+      state = 10;
+      break;
+    }
   }
   return;
 }
