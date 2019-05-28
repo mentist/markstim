@@ -1,0 +1,92 @@
+/*
+Version: 2013-09-19~2018-01-12
+Author: Yong-Jun Lin
+Purpose: Communication protocol definition
+
+
+Copyright (C) 2013-2019  Yong-Jun Lin
+This file is part of MarkStim, a TMS trigger/EEG event registration 
+device. See <https://yongjunlin.com/MarkStim/> for the documentation 
+and details.
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+*/
+
+% Copyright (C) 2013-2019  Yong-Jun Lin
+% This file is part of MarkStim, a TMS trigger/EEG event registration 
+% device. See <https://yongjunlin.com/MarkStim/> for the documentation 
+% and details.
+%
+% This program is free software: you can redistribute it and/or modify
+% it under the terms of the GNU General Public License as published by
+% the Free Software Foundation, either version 3 of the License, or
+% (at your option) any later version.
+%
+% This program is distributed in the hope that it will be useful,
+% but WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+% GNU General Public License for more details.
+%
+% You should have received a copy of the GNU General Public License
+% along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+
+<Special characters>
+Old syntax
+\n				Handshake (only once)
+`				Reset
+[]\r\n			Settings or Command (comma separated values)
+
+New syntax
+\r and \n are not necessary and will be ignored; handshake with ! instead of \n to avoid ambiguity in terminal programs
+!				Handshake (only once)
+`				Reset
+()				Unused
+a<>				Settings (comma separated values)	(will only respond with 0 or 1)
+[]				Command (comma separated values)	(will respond with defined complex behavior)
+{}				Unused
+
+<System states>
+Benchmark:
+	state	description
+	10		waiting for handshake
+	11		received !
+	12		sent 'Teensy ready'
+	20		(handshake done)-> listening
+	31		heard settings
+			(Cannot set baudrate here. It does not matter for Teensy anyways.)
+			set whether to use Serial.send_now / expected incoming bytes / expected outgoing bytes (discounting the special character '[')
+	35		doing settings
+	41		heard command (reading)
+	45		doing task (writing)
+	51		heard reset
+
+Production:
+	state	description
+	10		waiting for handshake
+	11		received !
+	12		sent 'Teensy ready'
+	20		(handshake done)-> listening
+	31		heard settings
+			set TTL window width (default 2 ms)
+	35		doing settings
+	41		heard command
+	45		doing task (triggering)
+	51		heard reset
+
+<Communication latency benchmarking>
+bounce time check
+given baudrate
+give data size
+given send_now
