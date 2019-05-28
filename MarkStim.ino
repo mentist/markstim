@@ -1,5 +1,5 @@
 /*
-Version: 2013-09-23~2018-01-15
+Version: 2013-09-23~2018-01-16
 Author: Yong-Jun Lin
 
 References:
@@ -49,6 +49,8 @@ History:
 2018-01-15
  1. Updated the communication steps with the following hierarchy:
     Setup+Loop(Handshake+RealDeal(SaveToBuffer+PerformSettings(ResetBuffer)+Perform command(ResetBuffer)+ResetDevice))
+2018-01-16
+ 1. Combined the new serial communication syntax code with the button/switch code so that there is a reset button for easy benchmarking. Fleshed out ResetDevice().
 
 Future:
  1. Test if 1 ms TTL can trigger TMS pulses
@@ -89,6 +91,9 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #if defined(__AVR_ATmega32U4__) // Teensy 2.0
 const unsigned int baudRate = 57600;
 const int pinLED = 11;
+const int pinSwitch1 = 10;
+const int pinSwitch2 = 9;
+const int pinResetButton = 6;
 #elif defined(__AVR_AT90USB1286__)  // Teensy++ 2.0
 const unsigned int baudRate = 57600;
 const int pinLED = 6;
@@ -114,6 +119,9 @@ From Protocol.txt:
   51    heard reset
 */
 unsigned char state = 10;
+bool bSwitch1 = HIGH;
+bool bSwitch2 = HIGH;
+bool bResetButton = HIGH;
 
 // String buffer for serial communication
 char buffer[BUFSIZE] = "\0";
@@ -133,17 +141,32 @@ void setup()
   // Set pin mode
   pinMode(pinLED, OUTPUT);
   digitalWrite(pinLED, LED_ON);
+  pinMode(pinSwitch1, INPUT_PULLUP);
+  pinMode(pinSwitch2, INPUT_PULLUP);
+  pinMode(pinResetButton, INPUT_PULLUP);
   return;
 }
 
 void loop()
 {
+  bSwitch1 = digitalRead(pinSwitch1);
+  bSwitch2 = digitalRead(pinSwitch2);
+  bResetButton = digitalRead(pinResetButton);
+
+  if (bResetButton == LOW)
+  {
+#ifdef DEBUGGING
+    Serial.println("Reset device.");
+#endif
+    ResetDevice();
+  }
+
   char newByte = '\0';
   if (Serial.available())
   {
     newByte = Serial.read();  // One byte at a time
 #ifdef DEBUGGING
-    Serial.println("Received new byte.");  // Received new byte
+    Serial.println("Received a new byte.");
 #endif
     if (state == 10)
       Handshake(newByte);
@@ -244,9 +267,11 @@ void PerformSettings()
   ResetBuffer();
 
   //Execute settings
-//#ifdef DEBUGGING
+#ifdef DEBUGGING
   Serial.println("Executed settings.");
-//#endif
+#else
+  Serial.println(".");
+#endif
   state = 20;
   return;
 }
@@ -292,7 +317,12 @@ void ResetBuffer()
 
 void ResetDevice()
 {
-  //To be implemented
+  // The reset button on Teensy is for reset to bootloader, not for power-on reset.
+  // This function emulates power-on reset by software, so reset no longer requires unplugging and replugging the USB cable.
+  // Finalize serial communication
+  Serial.end();  // Must end() before begin()
+  // Reset (emulate Arduino style reset)
+  _restart_Teensyduino_();
   return;
 }
 
