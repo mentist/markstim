@@ -62,6 +62,7 @@ History:
  4. Changed reset state ID. Added demo state ID.
  5. Defined function CheckReset() and CheckDemoSwitch().
  6. Considered the condition for restarting demo and the condition for stopping demo (back to waiting for handshake). Turns off LED when entering demo mode and turns it back on when leaving it.
+ 7. Wrote and put LED feedback code inside DEBUGGING mode.
 
 Future:
  1. Test if 1 ms TTL can trigger TMS pulses
@@ -94,6 +95,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 // Constants for debugging
 //#define DEBUGGING
+#define LED_FEEDBACK_DUR 1  // (ms)
 
 // Constants for memory management
 #define BUFSIZE 1025
@@ -140,7 +142,6 @@ From Protocol.txt:
   91    heard reset
 */
 unsigned char state = 10;
-bool bSwitch2 = HIGH;
 
 // String buffer for serial communication
 char buffer[BUFSIZE] = "\0";
@@ -171,8 +172,6 @@ void setup()
 
 void loop()
 {
-  bSwitch2 = digitalRead(pinSwitch2);
-
   CheckDemoSwitch();
   CheckReset();
 
@@ -413,6 +412,15 @@ void update8BitShiftRegister(byte val)
   digitalWrite(pinLatch, LOW);     //Pulls the chips latch low
   shiftOut(pinData, pinClock, MSBFIRST, val); //Shifts out the 8 bits to the shift register
   digitalWrite(pinLatch, HIGH);   //Pulls the latch high displaying the data
+#ifdef DEBUGGING
+  bool bSwitch2 = digitalRead(pinSwitch2);
+  if (bSwitch2 == LOW)
+  {
+    digitalWrite(pinLED, LED_ON);
+    delay(LED_FEEDBACK_DUR); // 1 ms is sufficient for visible LED feedback upon trigger onset
+    digitalWrite(pinLED, LED_OFF);
+  }
+#endif
 }
 
 void ResetDevice()
