@@ -1,11 +1,8 @@
 /*
-Version: 2013-09-23~2018-01-12
+Version: 2013-09-23~2018-01-15
 Author: Yong-Jun Lin
 
 References:
-The official LED blink demo (File\Examples\Teensy\Tutorial1\Blink)
-The official EchoBoth demo (File\Examples\Teensy\Serial\EchoBoth)
-
 Definition of a TTL signal
   http://digital.natinst.com/public.nsf/$CXIV/ATTACH-AEEE-89LM9U/$FILE/TTL%20Specification.gif
 On Teensyduino, Serial.begin() actually accesses USB (12 Mbit/sec) so the baud rate does not matter.
@@ -48,6 +45,10 @@ History:
  5. Tested whether CR+LF will be transmitted as part of the string.
 2018-01-12
  1. ﻿Handshake, parsing command, and executing command (old syntax since 2013)
+ 2. Redesigned communication protocol
+2018-01-15
+ 1. Updated the communication steps with the following hierarchy:
+    Setup+Loop(Handshake+RealDeal(SaveToBuffer+PerformSettings(ResetBuffer)+Perform command(ResetBuffer)+ResetDevice))
 
 Future:
  1. Test if 1 ms TTL can trigger TMS pulses
@@ -95,17 +96,33 @@ const int pinLED = 6;
 #define LED_ON HIGH
 #define LED_OFF LOW
 
-// State variables of the machine
-boolean bTeensyReady = false;
-boolean bTeensyRecving = false;
-boolean bTeensyExecing = false;
+// Constants for communication
+#define HANDSHAKE_CHAR '!'
+
+// State variable and constants of the machine
+/*
+From Protocol.txt:
+  state description
+  10    waiting for handshake
+  11    received !
+  12    sent 'Teensy ready'
+  20    (handshake done)-> listening
+  31    heard settings
+  35    doing settings
+  41    heard command
+  45    doing task ()
+  51    heard reset
+*/
+unsigned char state = 10;
 
 // String buffer for serial communication
 char buffer[BUFSIZE] = "\0";
 unsigned int pBuffer = 0;
 
-// Command variables
+// Settings variables
 int nPeriods = 0;
+
+// Command variables
 int periodOn_ms = 0;
 int periodOff_ms = 0;
 
@@ -115,137 +132,138 @@ void setup()
   Serial.begin(baudRate);
   // Set pin mode
   pinMode(pinLED, OUTPUT);
+  digitalWrite(pinLED, LED_ON);
+  return;
 }
 
 void loop()
 {
-  //Phase 1 (handshake): wait for the computer's '\n' and then reply 'Teensy ready\n'
-  //Phase 2 (settings): wait for a particular syntax and set execution variables (led on and off time)
-  //Phase 3 (execution): blink the LED accordinly
-  //An extension of this process has infinite phase 2 and phase 3 alternations
-
-  if (!bTeensyReady)
+  char newByte = '\0';
+  if (Serial.available())
   {
-    //LED on as state indicator
-    digitalWrite(pinLED, LED_ON);
+    newByte = Serial.read();  // One byte at a time
+#ifdef DEBUGGING
+    Serial.println("Received new byte.");  // Received new byte
+#endif
+    if (state == 10)
+      Handshake(newByte);
+    else  //>= 20
+      RealDeal(newByte);
+  }
+  return;
+}
 
-    Handshake();
+void Handshake(char newByte)
+{
+  // Wait for '!' and reply with 'Teensy ready\n'
+
+  if (newByte == HANDSHAKE_CHAR)
+  {
+    state = 11;
+    //Serial.flush();
+    Serial.println("Teensy ready");
+    state = 12;
+    memset(buffer, '\0', BUFSIZE);
+    state = 20;
+    digitalWrite(pinLED, LED_OFF);  // LED as state indicator (off means handshake is done)
+  }
+  return;
+}
+
+void RealDeal(char newByte)
+{
+  //Syntax:
+  //1. Settings: <{param1},{param2},{param3},...>
+  //2. Command: [{param1},{param2},{param3},...]
+  //3. Reset: `
+  //(\r and \n are not necessary and will be ignored)
+
+  if (newByte == '`')
+  {
+    state = 51;
+    Serial.println("Reset device.");
+    ResetDevice();
+    return;
+  }
+
+  if (state == 20)
+  {
+    if (newByte == '<')
+      state = 31;
+    else if (newByte == '[')
+      state = 41;
+  }
+  else if (state == 31)
+  {
+    if (newByte != '>')
+      SaveToBuffer(newByte);
+    else
+    {
+      state = 35;
+      PerformSettings();
+    }
+  }
+  else if (state == 41)
+  {
+    if (newByte != ']')
+      SaveToBuffer(newByte);
+    else
+    {
+      state = 45;
+      PerformCommand();
+    }
+  }
+  return;
+}
+
+void SaveToBuffer(char newByte)
+{
+  buffer[pBuffer] = char(newByte);
+  pBuffer++;
+#ifdef DEBUGGING
+  if (pBuffer == BUFSIZE)
+  {
+    Serial.println("Error: Input parameter longer than buffer size.");
+    //Serial.flush();
   }
   else
-  {
-    //LED off as state indicator
-    digitalWrite(pinLED, LED_OFF);
-    
-    if (!bTeensyExecing)
-      RecvCmd();
-    else
-      ExecCmd();
-  }
-}
-
-void Handshake()
-{
-  // Wait for '\n' and reply with 'Teensy ready.'
-
-  char newByte = '\0';
-  if (Serial.available())
-  {
-    newByte = Serial.read();
-    if (newByte == '\n')
-    {
-      //Serial.flush();
-      Serial.println("Teensy ready");
-      memset(buffer, '\0', BUFSIZE);
-      bTeensyReady = true;
-    }
-  }
+    Serial.println("Writing new byte to buffer");
+#endif
   return;
 }
 
-void RecvCmd()
+void PerformSettings()
 {
-  //Syntax: [{param1},{param2},{param3},...]
+  //Input: global variable buffer
 
-  char newByte = '\0';
-
-  //Debug
-  if (Serial.available())
-  {
-    //The protocol here is that input data should be comma separated values followed by one new line character
-    newByte = Serial.read();
-    if (newByte == '\r' || newByte == '\n')  // Only considered "\r\n" and "\n"
-    {
-      //Do nothing
-    }
-    else if (newByte == '[')
-    {
-      bTeensyRecving = true;
-    }
-    else if (newByte == ']')
-    {
-      if (bTeensyRecving)  // which should be the case
-      {
-#ifdef DEBUGGING
-        // Feedback
-        Serial.println("Received.");  // Received command
-#endif
-        // Parse trial information
-        pBuffer = 0;
-        if (ParseCmd(buffer))
-        {
-          Serial.flush();
-#ifdef DEBUGGING
-          Serial.println("Go.");
-#endif
-          memset(buffer, '\0', BUFSIZE);
-          bTeensyRecving = false;
-          bTeensyExecing = true;
-#ifdef DEBUGGING
-          // Feedback
-          Serial.println("Parsed.");  // Parsed command
-#endif
-          // Cmd loaded
-          return;
-        }
-        else
-        {
-#ifdef DEBUGGING
-          Serial.println("No go.");
-#endif
-        }
-      }
-    }
-    else
-    {
-      if (bTeensyRecving)  // which should be the case
-      {
-        buffer[pBuffer] = char(newByte);
-        pBuffer++;
-        if (pBuffer == BUFSIZE)
-        {
-#ifdef DEBUGGING
-          Serial.println("Error: Input parameter longer than buffer size.");
-#endif
-          //Serial.flush();
-          return;
-        }
-      }
-    }
-  }
-  return;
-}
-
-boolean ParseCmd(char* buffer)
-{
+  //Parse buffer
   nPeriods = atoi(strtok(buffer, ","));
-  periodOn_ms = atoi(strtok(NULL, ","));
-  periodOff_ms = atoi(strtok(NULL, ","));
-  return true;
+#ifdef DEBUGGING
+  Serial.println("Parsed settings.");
+#endif
+  ResetBuffer();
+
+  //Execute settings
+//#ifdef DEBUGGING
+  Serial.println("Executed settings.");
+//#endif
+  state = 20;
+  return;
 }
 
-void ExecCmd()
+void PerformCommand()
 {
-  // Execute command
+  //Input: global variable buffer
+
+  //Parse buffer
+  periodOn_ms = atoi(strtok(buffer, ","));
+  periodOff_ms = atoi(strtok(NULL, ","));
+#ifdef DEBUGGING
+  Serial.println("Parsed command.");
+#endif
+  ResetBuffer();
+
+  //Execute command
   for (int i = 0; i < nPeriods; i++)
   {
     digitalWrite(pinLED, LED_ON);
@@ -253,14 +271,28 @@ void ExecCmd()
     digitalWrite(pinLED, LED_OFF);
     delay(periodOff_ms);
   }
-
-  // Command executed
-  bTeensyExecing = false;
-
 #ifdef DEBUGGING
-  //Feedback
-  Serial.println(".");
+  Serial.println("Executed command.");
 #endif
+  state = 20;
+
+  return;
+}
+
+void ResetBuffer()
+{
+  pBuffer = 0;
+  memset(buffer, '\0', BUFSIZE);
+  Serial.flush();
+#ifdef DEBUGGING
+  Serial.println("Reset buffer.");
+#endif
+  return;
+}
+
+void ResetDevice()
+{
+  //To be implemented
   return;
 }
 
