@@ -63,6 +63,8 @@ History:
  5. Defined function CheckReset() and CheckDemoSwitch().
  6. Considered the condition for restarting demo and the condition for stopping demo (back to waiting for handshake). Turns off LED when entering demo mode and turns it back on when leaving it.
  7. Wrote and put LED feedback code inside DEBUGGING mode.
+ 8. Allowed >16 ms TTL pulse width.
+ 9. Encoded the trigger value by char rather than by a string of number.
 
 Future:
  1. Test if 1 ms TTL can trigger TMS pulses
@@ -96,6 +98,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 // Constants for debugging
 //#define DEBUGGING
 #define LED_FEEDBACK_DUR 1  // (ms)
+//#define SCAFFOLDING
 
 // Constants for memory management
 #define BUFSIZE 1025
@@ -149,7 +152,7 @@ unsigned int pBuffer = 0;
 
 // Settings variables (with default values)
 int bTTL = true; // bool actually
-int TTLPulseWidth = 1000-DELAYOFDELAY;  // (microsec)
+long TTLPulseWidth = 1000-DELAYOFDELAY;  // (microsec)
 
 // Command variables
 byte triggerVal = 0;
@@ -167,6 +170,8 @@ void setup()
   pinMode(pinData, OUTPUT);
   pinMode(pinClock, OUTPUT);
   pinMode(pinLatch, OUTPUT);
+  // Reset shift register
+  update8BitShiftRegister(0);
   return;
 }
 
@@ -336,10 +341,10 @@ void PerformSettings()
 
   //Parse buffer
   bTTL = atoi(strtok(buffer, ",")); // TTL (goes back to 0 as background default value) or value locking mode
-  TTLPulseWidth = atoi(strtok(NULL, ","));
+  TTLPulseWidth = atol(strtok(NULL, ","));
   if (TTLPulseWidth <= DELAYOFDELAY)  // (microsec)
   {
-    TTLPulseWidth = TTLPulseWidth;  // Beyond correction if <= DELAYOFDELAY
+    //TTLPulseWidth = TTLPulseWidth;  // Beyond correction if <= DELAYOFDELAY
     Serial.print(SETTINGS_NOTOK_CHAR);  // Feedback character
   }
   else
@@ -366,7 +371,11 @@ void PerformCommand()
   //Input: global variable buffer
 
   //Parse buffer
-  triggerVal = atoi(strtok(buffer, ","));
+#ifdef SCAFFOLDING
+  triggerVal = atoi(strtok(buffer, ",")); // For debugging! For example, "[65]".
+#else
+  triggerVal = char(buffer[0]); // The real 1 byte coding. For example, For example, "[A]".
+#endif
 #ifdef DEBUGGING
   Serial.println("Parsed command.");
   Serial.println(triggerVal);
@@ -401,8 +410,12 @@ void SendTrigger(byte val)
   // Minimal length of trigger signal under 1000 Hz is 2 ms
   if (bTTL)
   {
-    //delay(TTLPulseWidth); // (ms)
-    delayMicroseconds(TTLPulseWidth); // (microsec) This command itself has about 38 microsec delay. The same thing applies to delay().
+    //https://www.arduino.cc/reference/en/language/variables/data-types/int/
+    //https://www.arduino.cc/reference/en/language/functions/time/delaymicroseconds/
+    if (TTLPulseWidth <= 32767)
+      delayMicroseconds(TTLPulseWidth); // (microsec) This command itself has about 38 microsec delay. The same thing applies to delay().
+    else
+      delay(TTLPulseWidth/1000); // (ms)
     update8BitShiftRegister(0);
   }
 }
@@ -429,6 +442,8 @@ void ResetDevice()
   // This function emulates power-on reset by software, so reset no longer requires unplugging and replugging the USB cable.
   // Finalize serial communication
   Serial.end();  // Must end() before begin()
+  // Reset shift register
+  update8BitShiftRegister(0);
   // Reset (emulate Arduino style reset)
   _restart_Teensyduino_();
   return;
