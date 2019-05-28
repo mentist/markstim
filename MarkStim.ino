@@ -31,6 +31,7 @@ History:
  1. Branched out to develop a high-level protocol based on serial communication between the board and a computer.
  2. Controlled LED by serial communication.
  3. Reduced the test case to character echoing.
+ 4. Instead of echoing, respond by ++ to an incoming character.
 
 Future:
  1. Test if 1 ms TTL can trigger TMS pulses
@@ -88,6 +89,10 @@ void loop()
   if (Serial.available())
   {
     incomingByte = Serial.read();
+    if (incomingByte < 255)
+      incomingByte++;
+    else
+      incomingByte = 0;
     Serial.print(incomingByte);
   }
 }
