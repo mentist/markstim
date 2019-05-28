@@ -1,5 +1,5 @@
 /*
-Version: 2013-09-23~2018-01-09
+Version: 2013-09-23~2018-01-10
 Author: Yong-Jun Lin
 
 References:
@@ -27,6 +27,9 @@ History:
  1. Tested Magstim Super Rapid 2 Plus 1 and found that 3 ms TTL can reliably trigger TMS pulse.
  2. Set pin mode as INPUT_PULLUP so that the default is HIGH (5V). When the switch is on or when the button is pressed, it goes to LOW (0V; GND).
  3. Set the serial communication speed (can be arbitrary for Teensy, just use 57600 so that it is also a reasonable number for Arduino)
+2018-01-10
+ 1. Branched out to develop a high-level protocol based on serial communication between the board and a computer.
+ 2. Controlled LED by serial communication
 
 Future:
  1. Test if 1 ms TTL can trigger TMS pulses
@@ -74,33 +77,25 @@ const int pinLED = 6;
 void setup()
 {
   // Set serial communication (actually USB if using Teensy)
-  Serial.begin(baudRate);
-  // Set pin mode
-  pinMode(pinSwitch1, INPUT_PULLUP);
-  pinMode(pinSwitch2, INPUT_PULLUP);
-  pinMode(pinResetButton, INPUT_PULLUP);
-  pinMode(pinLED, OUTPUT);  
+  Serial.begin(57600);
+  pinMode(pinLED, OUTPUT);
 }
 
-bool bSwitch1 = false;
-bool bSwitch2 = false;
-bool bResetButton = false;
-
-void loop()                     
+void loop()
 {
-  bSwitch1 = digitalRead(pinSwitch1);
-  bSwitch2 = digitalRead(pinSwitch2);
-  bResetButton = digitalRead(pinResetButton);
-  if (bSwitch1==LOW || bSwitch2==LOW || bResetButton==LOW)
+  char incomingByte = '\0';
+
+  if (Serial.available())
   {
-    Serial.print("Some switch or button on\n");
-    digitalWrite(pinLED, LED_ON);
+    incomingByte = Serial.read();
+    if (incomingByte == '`')
+    {
+      digitalWrite(pinLED, LED_ON);
+    }
+    else
+    {
+      digitalWrite(pinLED, LED_OFF);
+    }
   }
-  else
-  {
-    Serial.print("All switches and buttons off\n");
-    digitalWrite(pinLED, LED_OFF);
-  }
-  delay(500);
 }
 
