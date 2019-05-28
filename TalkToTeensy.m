@@ -1,4 +1,4 @@
-% Version: 2018-01-09~2018-01-10
+% Version: 2018-01-09~2018-01-11
 % Author: Yong-Jun Lin
 %
 % References:
@@ -8,6 +8,7 @@
 %
 % History:
 % 2018-01-09 YJL Controlled LED by serial communication
+% 2018-01-11 YJL Reduced the test case to character echoing
 
 % Copyright (C) 2013-2019  Yong-Jun Lin
 % This file is part of MarkStim, a TMS trigger/EEG event registration 
@@ -28,13 +29,16 @@
 % along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 baudRate = 57600;
-system('ls /dev | grep usbmodem');
-teensy = serial('/dev/cu.usbmodem12341', 'BaudRate', baudRate);
+system('ls /dev | grep usbmodem12341');
+teensy = serial('/dev/tty.usbmodem12341', 'BaudRate', baudRate);
+N = 1000;
 fopen(teensy)
-for t = 1:10
+tic
+for i = 1:N
 	fprintf(teensy, '%s', '`')
-	pause(0.5)
-	fprintf(teensy, '%s', ' ')
-	pause(0.5)
+	c = fscanf(teensy, '%s', 1);
+	%disp(c)
 end
+dur = toc;
 fclose(teensy)
+dur/N
