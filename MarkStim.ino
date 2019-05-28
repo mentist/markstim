@@ -5,6 +5,12 @@ Author: Yong-Jun Lin
 References:
 Definition of a TTL signal
   http://digital.natinst.com/public.nsf/$CXIV/ATTACH-AEEE-89LM9U/$FILE/TTL%20Specification.gif
+On Teensyduino, Serial.begin() actually accesses USB (12 Mbit/sec) so the baud rate does not matter.
+  https://www.pjrc.com/teensy/td_serial.html
+On Teensyduino, Serial1.begin() accesses hardware serial UART. This is not useful for the current project.
+  https://www.pjrc.com/teensy/td_uart.html
+Serial.send_now() and transmit buffering
+  https://www.pjrc.com/teensy/td_serial.html#txbuffer
 
 History:
 2013-09-23
@@ -20,11 +26,15 @@ History:
 2018-01-09
  1. Tested Magstim Super Rapid 2 Plus 1 and found that 3 ms TTL can reliably trigger TMS pulse.
  2. Set pin mode as INPUT_PULLUP so that the default is HIGH (5V). When the switch is on or when the button is pressed, it goes to LOW (0V; GND).
+ 3. Set the serial communication speed (can be arbitrary for Teensy, just use 57600 so that it is also a reasonable number for Arduino)
 
 Future:
  1. Test if 1 ms TTL can trigger TMS pulses
  2. Test the shortest TTL that can trigger TMS pulses
  3. Test the TMS response time offset from TTL onset with an oscilloscope
+ 4. Explore hardware vs. software serial speed
+ 5. Examine packet round trip time. Better to measure it as a function of string length.
+ 6. Test if Serial.send_now() matters for temporal precision! It might only matter for response pads.
 
 
 Copyright (C) 2013-2019  Yong-Jun Lin
@@ -49,6 +59,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 // Constants about hardware level wiring
 #if defined(__AVR_ATmega32U4__) // Teensy 2.0
+const unsigned int baudRate = 57600;
 const int pinLED = 11;
 const int pinSwitch1 = 10;
 const int pinSwitch2 = 9;
@@ -62,11 +73,13 @@ const int pinLED = 6;
 
 void setup()
 {
+  // Set serial communication (actually USB if using Teensy)
+  Serial.begin(baudRate);
   // Set pin mode
   pinMode(pinSwitch1, INPUT_PULLUP);
   pinMode(pinSwitch2, INPUT_PULLUP);
   pinMode(pinResetButton, INPUT_PULLUP);
-  pinMode(pinLED, OUTPUT);
+  pinMode(pinLED, OUTPUT);  
 }
 
 bool bSwitch1 = false;
@@ -79,9 +92,15 @@ void loop()
   bSwitch2 = digitalRead(pinSwitch2);
   bResetButton = digitalRead(pinResetButton);
   if (bSwitch1==LOW || bSwitch2==LOW || bResetButton==LOW)
+  {
+    Serial.print("Some switch or button on\n");
     digitalWrite(pinLED, LED_ON);
+  }
   else
+  {
+    Serial.print("All switches and buttons off\n");
     digitalWrite(pinLED, LED_OFF);
-  delay(1);
+  }
+  delay(500);
 }
 
