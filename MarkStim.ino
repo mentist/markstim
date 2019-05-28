@@ -29,7 +29,8 @@ History:
  3. Set the serial communication speed (can be arbitrary for Teensy, just use 57600 so that it is also a reasonable number for Arduino)
 2018-01-10
  1. Branched out to develop a high-level protocol based on serial communication between the board and a computer.
- 2. Controlled LED by serial communication
+ 2. Controlled LED by serial communication.
+ 3. Reduced the test case to character echoing.
 
 Future:
  1. Test if 1 ms TTL can trigger TMS pulses
@@ -78,7 +79,6 @@ void setup()
 {
   // Set serial communication (actually USB if using Teensy)
   Serial.begin(baudRate);
-  pinMode(pinLED, OUTPUT);
 }
 
 void loop()
@@ -88,14 +88,7 @@ void loop()
   if (Serial.available())
   {
     incomingByte = Serial.read();
-    if (incomingByte == '`')
-    {
-      digitalWrite(pinLED, LED_ON);
-    }
-    else
-    {
-      digitalWrite(pinLED, LED_OFF);
-    }
+    Serial.print(incomingByte);
   }
 }
 
