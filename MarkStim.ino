@@ -77,7 +77,7 @@ const int pinLED = 6;
 void setup()
 {
   // Set serial communication (actually USB if using Teensy)
-  Serial.begin(57600);
+  Serial.begin(baudRate);
   pinMode(pinLED, OUTPUT);
 }
 
