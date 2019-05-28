@@ -32,6 +32,7 @@ History:
  2. Controlled LED by serial communication.
  3. Reduced the test case to character echoing.
  4. Instead of echoing, respond by ++ to an incoming character.
+ 5. Tested whether CR+LF will be transmitted as part of the string.
 
 Future:
  1. Test if 1 ms TTL can trigger TMS pulses
@@ -89,11 +90,7 @@ void loop()
   if (Serial.available())
   {
     incomingByte = Serial.read();
-    if (incomingByte < 255)
-      incomingByte++;
-    else
-      incomingByte = 0;
-    Serial.print(incomingByte);
+    Serial.println("This is a sentence with CR+LF.");
   }
 }
 

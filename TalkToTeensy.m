@@ -10,6 +10,7 @@
 % 2018-01-09 YJL Controlled LED by serial communication
 % 2018-01-11 YJL Reduced the test case to character echoing
 %                Instead of echoing, respond by ++ to an incoming character.
+%                Tested whether CR+LF will be transmitted as part of the string.
 
 % Copyright (C) 2013-2019  Yong-Jun Lin
 % This file is part of MarkStim, a TMS trigger/EEG event registration 
@@ -33,8 +34,9 @@ baudRate = 57600;
 system('ls /dev | grep usbmodem12341');
 teensy = serial('/dev/tty.usbmodem12341', 'BaudRate', baudRate);
 fopen(teensy)
-for c = 33:60
-	fprintf(teensy, '%s', c)
-	disp([sprintf('%s', c) ' -> ' fscanf(teensy, '%s', 1)])
+for i = 1:10
+	fprintf(teensy, '%s', randi([0 255]))
+	s = fgetl(teensy);
+	%disp(s)
 end
 fclose(teensy)
