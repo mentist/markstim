@@ -19,6 +19,7 @@ History:
  1. Added #if defined() and #elif defined() macros to generalize to applicable environments (Teensy 2.0 and Teensy++ 2.0, not yet Arduino)
 2018-01-09
  1. Tested Magstim Super Rapid 2 Plus 1 and found that 3 ms TTL can reliably trigger TMS pulse.
+ 2. Set pin mode as INPUT_PULLUP so that the default is HIGH (5V). When the switch is on or when the button is pressed, it goes to LOW (0V; GND).
 
 Future:
  1. Test if 1 ms TTL can trigger TMS pulses
@@ -44,10 +45,15 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
-    
+
+
 // Constants about hardware level wiring
 #if defined(__AVR_ATmega32U4__) // Teensy 2.0
 const int pinLED = 11;
+const int pinSwitch1 = 10;
+const int pinSwitch2 = 9;
+const int pinResetButton = 6;
+//Avoid using pin 7 (RX) and 8 (TX) because these two are reserved for serial communication
 #elif defined(__AVR_AT90USB1286__)  // Teensy++ 2.0
 const int pinLED = 6;
 #endif
@@ -57,14 +63,25 @@ const int pinLED = 6;
 void setup()
 {
   // Set pin mode
-  pinMode(pinLED, OUTPUT);  
+  pinMode(pinSwitch1, INPUT_PULLUP);
+  pinMode(pinSwitch2, INPUT_PULLUP);
+  pinMode(pinResetButton, INPUT_PULLUP);
+  pinMode(pinLED, OUTPUT);
 }
 
-void loop()
+bool bSwitch1 = false;
+bool bSwitch2 = false;
+bool bResetButton = false;
+
+void loop()                     
 {
-  digitalWrite(pinLED, LED_ON);
-  delay(3); // 3ms
-  digitalWrite(pinLED, LED_OFF);
-  delay(4000);
+  bSwitch1 = digitalRead(pinSwitch1);
+  bSwitch2 = digitalRead(pinSwitch2);
+  bResetButton = digitalRead(pinResetButton);
+  if (bSwitch1==LOW || bSwitch2==LOW || bResetButton==LOW)
+    digitalWrite(pinLED, LED_ON);
+  else
+    digitalWrite(pinLED, LED_OFF);
+  delay(1);
 }
 
