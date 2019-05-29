@@ -1,11 +1,6 @@
 % Version: 2018-01-09~2018-01-17
 % Author: Yong-Jun Lin
 %
-% References:
-% http://www.instructables.com/id/Arduino-and-Matlab-let-them-talk-using-serial-comm/
-% https://www.mathworks.com/Matlabcentral/answers/255495-serial-communication-read-write-from-to-arduino-on-Matlab-support-package-for-arduino-hardware
-% https://www.mathworks.com/Matlabcentral/answers/325725-sending-values-from-Matlab-to-arduino-using-serial-communication?requestedDomain=www.mathworks.com
-%
 % History:
 % 2018-01-09 YJL Controlled LED by serial communication.
 % 2018-01-11 YJL Reduced the test case to character echoing.
@@ -13,6 +8,11 @@
 %                Tested whether CR+LF will be transmitted as part of the string.
 % 2018-01-15 YJL Completed the basic communcation with MarkStim('o'), MarkStim('w'), MarkStim('r'), and MarkStim('c').
 % 2018-01-17 YJL Simplified the steps with MarkStim('i'), MarkStim('s'), MarkStim('t'), and MarkStim('x').
+%
+% References:
+% http://www.instructables.com/id/Arduino-and-Matlab-let-them-talk-using-serial-comm/
+% https://www.mathworks.com/Matlabcentral/answers/255495-serial-communication-read-write-from-to-arduino-on-Matlab-support-package-for-arduino-hardware
+% https://www.mathworks.com/Matlabcentral/answers/325725-sending-values-from-Matlab-to-arduino-using-serial-communication?requestedDomain=www.mathworks.com
 
 % Copyright (C) 2013-2019  Yong-Jun Lin
 % This file is part of MarkStim, a TMS trigger/EEG event registration 

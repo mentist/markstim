@@ -2,6 +2,19 @@
 Version: 2018-01-11~2018-01-17
 Author: Yong-Jun Lin
 
+History:
+2018-01-11 YJL	Modified standard serial communication code in POSIX C into a mex function.
+				Implemented input variable extraction
+2018-01-12 YJL	Implemented persistent variable
+2018-01-15 YJL	Implemented serial C
+2018-01-16 YJL	Added second order commands 'i(nitialize)', '(s)ettings', '(t)rigger', 'e(x)it' to avoid low level function calls and simplifiy Matlab code complexity. This version is for triggering. Adapted from TeensyBenchmark.c
+2018-01-17 YJL	Made the variable TTLPulseWidth long instead of int
+
+Future:
+1. Add time out error for handshaking
+2. Try clear mex to make sure that Matlab does not crash
+3. Need to return the string
+
 Steps and references:
 1. Enable C compiler by installing Xcode
 2. Enable Matlab Mex with C on Mac
@@ -66,19 +79,6 @@ Steps and references:
     https://www.mathworks.com/help/matlab/apiref/mxdestroyarray.html
     https://www.mathworks.com/help/matlab/matlab_external/memory-management.html
 
-History:
-2018-01-11 YJL	Modified standard serial communication code in POSIX C into a mex function.
-				Implemented input variable extraction
-2018-01-12 YJL	Implemented persistent variable
-2018-01-15 YJL	Implemented serial C
-2018-01-16 YJL	Added second order commands 'i(nitialize)', '(s)ettings', '(t)rigger', 'e(x)it' to avoid low level function calls and simplifiy Matlab code complexity. This version is for triggering. Adapted from TeensyBenchmark.c
-2018-01-17 YJL	Made the variable TTLPulseWidth long instead of int
-
-Future:
-1. Add time out error for handshaking
-2. Try clear mex to make sure that Matlab does not crash
-3. Need to return the string
-
 
 Copyright (C) 2013-2019  Yong-Jun Lin
 This file is part of MarkStim, a TMS trigger/EEG event registration 
@@ -99,10 +99,11 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+
 //#include <stdio.h>   /* Standard input/output definitions */
 #include <string.h>  /* String function definitions */
 //#include <unistd.h>  /* UNIX standard function definitions */
-//#include <fcntl.h>   /* File control definitions */
+#include <fcntl.h>   /* File control definitions */
 //#include <errno.h>   /* Error number definitions */
 #include <termios.h> /* POSIX terminal control definitions */
 //#include <sys/types.h>

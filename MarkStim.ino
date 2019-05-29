@@ -2,26 +2,6 @@
 Version: 2013-09-23~2018-02-05
 Author: Yong-Jun Lin
 
-References:
-Definition of a TTL signal
-  http://digital.natinst.com/public.nsf/$CXIV/ATTACH-AEEE-89LM9U/$FILE/TTL%20Specification.gif
-On Teensyduino, Serial.begin() actually accesses USB (12 Mbit/sec) so the baud rate does not matter.
-  https://www.pjrc.com/teensy/td_serial.html
-On Teensyduino, Serial1.begin() accesses hardware serial UART. This is not useful for the current project.
-  https://www.pjrc.com/teensy/td_uart.html
-Serial.send_now() and transmit buffering
-  https://www.pjrc.com/teensy/td_serial.html#txbuffer
-Serial communication
- http://arduino.cc/en/Tutorial/ReadASCIIString
- http://arduinobasics.blogspot.com/2012/07/arduino-basics-simple-arduino-serial.html
- http://playground.arduino.cc/interfacing/python
- http://arduino.cc/en/Tutorial/SerialCallResponse
- Getting string:
- http://forum.arduino.cc/index.php/topic,45629.0.html
- http://forum.arduino.cc/index.php?topic=41888.0
-Serial communication latency
- http://neophob.com/2011/04/serial-latency-teensy-vs-arduino/
-
 History:
 2013-09-23
  1. Teensy 2.0 may be better than Teensy++ 2.0 in that it is smaller.
@@ -77,6 +57,26 @@ Future:
  4. Explore hardware vs. software serial speed
  5. Examine packet round trip time. Better to measure it as a function of string length.
  6. Test if Serial.send_now() matters for temporal precision! It might only matter for response pads.
+
+References:
+Definition of a TTL signal
+  http://digital.natinst.com/public.nsf/$CXIV/ATTACH-AEEE-89LM9U/$FILE/TTL%20Specification.gif
+On Teensyduino, Serial.begin() actually accesses USB (12 Mbit/sec) so the baud rate does not matter.
+  https://www.pjrc.com/teensy/td_serial.html
+On Teensyduino, Serial1.begin() accesses hardware serial UART. This is not useful for the current project.
+  https://www.pjrc.com/teensy/td_uart.html
+Serial.send_now() and transmit buffering
+  https://www.pjrc.com/teensy/td_serial.html#txbuffer
+Serial communication
+ http://arduino.cc/en/Tutorial/ReadASCIIString
+ http://arduinobasics.blogspot.com/2012/07/arduino-basics-simple-arduino-serial.html
+ http://playground.arduino.cc/interfacing/python
+ http://arduino.cc/en/Tutorial/SerialCallResponse
+ Getting string:
+ http://forum.arduino.cc/index.php/topic,45629.0.html
+ http://forum.arduino.cc/index.php?topic=41888.0
+Serial communication latency
+ http://neophob.com/2011/04/serial-latency-teensy-vs-arduino/
 
 
 Copyright (C) 2013-2019  Yong-Jun Lin
