@@ -1,0 +1,8 @@
+# 2019-05-28~2019-05-28
+# History:
+#	2019-05-28 YJL Supported .png and .mex.
+# References:
+# https://github.com/alexkaratarakis/gitattributes/blob/master/Matlab.gitattributes
+
+*.png binary
+*.mex* binary

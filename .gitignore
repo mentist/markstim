@@ -1,5 +1,13 @@
-# 2019-05-28~2019-05-28
-
+'''
+2019-05-28~2019-05-28
+History:
+2019-05-28 YJL Incorporated macOS, MATLAB, and Python .gitignore.
+               Commented out rules for .mex*.
+References:
+https://github.com/github/gitignore/blob/master/Global/macOS.gitignore
+https://github.com/github/gitignore/blob/master/Global/MATLAB.gitignore
+https://github.com/github/gitignore/blob/master/Python.gitignore
+'''
 
 ## https://github.com/github/gitignore/blob/master/Global/macOS.gitignore
 
@@ -40,7 +48,7 @@ Temporary Items
 *.m~
 
 # Compiled MEX binaries (all platforms)
-*.mex*
+#*.mex*
 
 # Packaged app and toolbox files
 *.mlappinstall
@@ -189,3 +197,6 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+
+## Project-specific rules
