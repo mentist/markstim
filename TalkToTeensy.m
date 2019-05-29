@@ -1,17 +1,6 @@
 % Version: 2018-01-09~2018-01-11
 % Author: Yong-Jun Lin
 %
-% References:
-% http://www.instructables.com/id/Arduino-and-Matlab-let-them-talk-using-serial-comm/
-% https://www.mathworks.com/Matlabcentral/answers/255495-serial-communication-read-write-from-to-arduino-on-Matlab-support-package-for-arduino-hardware
-% https://www.mathworks.com/Matlabcentral/answers/325725-sending-values-from-Matlab-to-arduino-using-serial-communication?requestedDomain=www.mathworks.com
-%
-% History:
-% 2018-01-09 YJL Controlled LED by serial communication
-% 2018-01-11 YJL Reduced the test case to character echoing
-%                Instead of echoing, respond by ++ to an incoming character.
-%                Tested whether CR+LF will be transmitted as part of the string.
-
 % Copyright (C) 2013-2019  Yong-Jun Lin
 % This file is part of MarkStim, a TMS trigger/EEG event registration 
 % device. See <https://yongjunlin.com/MarkStim/> for the documentation 
@@ -30,13 +19,29 @@
 % You should have received a copy of the GNU General Public License
 % along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+
 baudRate = 57600;
 system('ls /dev | grep usbmodem12341');
-teensy = serial('/dev/tty.usbmodem12341', 'BaudRate', baudRate);
+teensy = serial('/dev/cu.usbmodem12341', 'BaudRate', baudRate);
 fopen(teensy)
-for i = 1:10
-	fprintf(teensy, '%s', randi([0 255]))
-	s = fgetl(teensy);
-	%disp(s)
+pause(1)
+tic
+fprintf(teensy, '%s', '!')
+cc = char(fread(teensy, 14))';
+if ~strcmp(cc, sprintf('Teensy ready\r\n'))	% https://www.arduino.cc/en/Serial/Println
+	error('Handshaking error.')
+end
+t1 = toc;
+fprintf('Handshaking took %.3f secs.\n', t1);
+
+N = 100;
+dur = nan(1, N);
+for i = 1:N
+	tic
+	fprintf(teensy, '%s', '[')
+	c = fscanf(teensy, '%s', 1);
+	dur(i) = toc;
 end
 fclose(teensy)
+plot(dur)
+mean(dur)
