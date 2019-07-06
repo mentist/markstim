@@ -1,5 +1,5 @@
 /*
-Version: 2013-09-23~2018-02-05
+Version: 2013-09-23~2019-07-06
 Author: Yong-Jun Lin
 
 History:
@@ -49,6 +49,8 @@ History:
  1. Prepended 2^i for 4 rounds before 0~255 in the demo trigger mode.
 2018-02-05
  1. Fixed the wrong syntax 2^i to pow(2^7)
+2019-07-06
+ 1. State 51 can only be reached under state 20 now so that chr(96)='`' can be a legitimate value.
 
 Future:
  1. Test if 1 ms TTL can trigger TMS pulses
@@ -313,13 +315,6 @@ void RealDeal(char newByte)
   //3. Reset: `
   //(\r and \n are not necessary and will be ignored)
 
-  if (newByte == '`')
-  {
-    state = 51;
-    Serial.println("Reset device.");
-    ResetDevice();
-    return;
-  }
 
   if (state == 20)
   {
@@ -327,6 +322,12 @@ void RealDeal(char newByte)
       state = 31;
     else if (newByte == '[')
       state = 41;
+    else if (newByte == '`')
+    {
+      state = 51;
+      Serial.println("Reset device.");
+      ResetDevice();
+    }
   }
   else if (state == 31)
   {
