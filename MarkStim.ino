@@ -1,5 +1,5 @@
 /*
-Version: 2013-09-23~2019-07-06
+Version: 2013-09-23~2019-07-07
 Author: Yong-Jun Lin
 
 History:
@@ -51,6 +51,8 @@ History:
  1. Fixed the wrong syntax 2^i to pow(2^7)
 2019-07-06
  1. State 51 can only be reached under state 20 now so that chr(96)='`' can be a legitimate value.
+2019-07-07
+1. Trigger value can take any value including chr(93)=']' now.
 
 Future:
  1. Test if 1 ms TTL can trigger TMS pulses
@@ -82,8 +84,8 @@ Serial communication latency
 
 
 Copyright (C) 2013-2019  Yong-Jun Lin
-This file is part of MarkStim, a TMS trigger/EEG event registration 
-device. See <https://yongjunlin.com/MarkStim/> for the documentation 
+This file is part of MarkStim, a TMS trigger/EEG event registration
+device. See <https://yongjunlin.com/MarkStim/> for the documentation
 and details.
 
 This program is free software: you can redistribute it and/or modify
@@ -146,6 +148,7 @@ From Protocol.txt:
   31    heard settings
   35    doing settings
   41    heard command
+  43    heard more command
   45    doing task ()
   71    heard demo
   91    heard reset
@@ -341,13 +344,18 @@ void RealDeal(char newByte)
   }
   else if (state == 41)
   {
+    state = 43;
+    SaveToBuffer(newByte);
+  }
+  else if (state == 43)
+  {
+    // The ending byte is ']' in the previous version, but it can actually be omitted.
     if (newByte != ']')
-      SaveToBuffer(newByte);
-    else
     {
       state = 45;
       PerformCommand();
     }
+    // does not consider other cases
   }
   return;
 }
@@ -490,4 +498,3 @@ void loop()
   }
   return;
 }
-
