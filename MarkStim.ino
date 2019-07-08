@@ -350,12 +350,17 @@ void RealDeal(char newByte)
   else if (state == 43)
   {
     // The ending byte is ']' in the previous version, but it can actually be omitted.
-    if (newByte != ']')
+    if (newByte == ']')
     {
       state = 45;
       PerformCommand();
     }
-    // does not consider other cases
+    else
+    {
+#ifdef DEBUGGING
+      Serial.println("Unexpected command format.");
+#endif
+    }
   }
   return;
 }
