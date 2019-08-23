@@ -5,8 +5,8 @@ Purpose: Communication protocol definition
 
 
 Copyright (C) 2013-2019  Yong-Jun Lin
-This file is part of MarkStim, a TMS trigger/EEG event registration 
-device. See <https://yongjunlin.com/MarkStim/> for the documentation 
+This file is part of MarkStim, a TMS trigger/EEG event registration
+device. See <https://yongjunlin.com/MarkStim/> for the documentation
 and details.
 
 This program is free software: you can redistribute it and/or modify
@@ -23,24 +23,6 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-% Copyright (C) 2013-2019  Yong-Jun Lin
-% This file is part of MarkStim, a TMS trigger/EEG event registration 
-% device. See <https://yongjunlin.com/MarkStim/> for the documentation 
-% and details.
-%
-% This program is free software: you can redistribute it and/or modify
-% it under the terms of the GNU General Public License as published by
-% the Free Software Foundation, either version 3 of the License, or
-% (at your option) any later version.
-%
-% This program is distributed in the hope that it will be useful,
-% but WITHOUT ANY WARRANTY; without even the implied warranty of
-% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-% GNU General Public License for more details.
-%
-% You should have received a copy of the GNU General Public License
-% along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
 
 <Special characters>
 Old syntax
@@ -53,7 +35,7 @@ New syntax
 !				Handshake (only once)
 `				Reset
 ()				Unused
-a<>				Settings (comma separated values)	(will only respond with 0 or 1)
+<>				Settings (comma separated values)	(will only respond with 0 or 1)
 []				Command (comma separated values)	(will respond with defined complex behavior)
 {}				Unused
 
