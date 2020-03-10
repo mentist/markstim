@@ -83,7 +83,7 @@ Serial communication latency
  http://neophob.com/2011/04/serial-latency-teensy-vs-arduino/
 
 
-Copyright (C) 2013-2019  Yong-Jun Lin
+Copyright (C) 2013-2020  Yong-Jun Lin
 This file is part of MarkStim, a TMS trigger/EEG event registration
 device. See <https://yongjunlin.com/MarkStim/> for the documentation
 and details.

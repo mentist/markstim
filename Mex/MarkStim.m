@@ -33,9 +33,14 @@
 %  result, only 1~255 are considered as signals by these systems.
 %
 %  <Usage>
-%   MarkStim('i', '/dev/cu.usbmodem12341) initializes serial
-%   communication and handshakes with the device. This is required before
-%   executing any of the following three sub-commands ('t', 's', and 'x').
+%   MarkStim('i', <port>) initializes serial communication and handshakes 
+%   with the device. This is required before executing any of the following 
+%   three sub-commands ('t', 's', and 'x').
+%   On Linux or MacOS, try ls /dev/tty* to find out the port for the
+%   MarkStim device. On Windows, check COM1~COM8 in device manager.
+%   On MacOS, <port> is typically '/dev/tty.usbmodem12341'
+%   On Linux, <port> is typically '/dev/ttyACM0'
+%   On Windows, <port> is sometimes 'COM5'
 %
 %    If MATLAB hangs for more than 2 seconds, it means that the device is
 %    not in a state waiting for handshake. Make sure that the demo mode
@@ -84,11 +89,11 @@
 %  MarkStim('x')
 %
 %
-% MEX C code version: 2018-01-16
-% MEX help file version: 2018-05-28
+% MEX C code version: 2020-03-09
+% MEX help file version: 2020-03-09
 %
 %
-% Copyright (C) 2013-2019  Yong-Jun Lin
+% Copyright (C) 2013-2020  Yong-Jun Lin
 % This file is part of MarkStim, a TMS trigger/EEG event registration 
 % device. See <https://yongjunlin.com/MarkStim/> for the documentation 
 % and details.

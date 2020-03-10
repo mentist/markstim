@@ -1,5 +1,5 @@
 /*
-Version: 2018-01-11~2018-01-17
+Version: 2018-01-11~2020-03-09
 Author: Yong-Jun Lin
 
 History:
@@ -9,6 +9,7 @@ History:
 2018-01-15 YJL	Implemented serial C
 2018-01-16 YJL	Added second order commands 'i(nitialize)', '(s)ettings', '(t)rigger', 'e(x)it' to avoid low level function calls and simplifiy Matlab code complexity. This version is for triggering. Adapted from TeensyBenchmark.c
 2018-01-17 YJL	Made the variable TTLPulseWidth long instead of int
+2019-08-14 YJL	Solved the problem on Linux where the handshake string drops \r.
 
 Future:
 1. Add time out error for handshaking
@@ -80,9 +81,9 @@ Steps and references:
     https://www.mathworks.com/help/matlab/matlab_external/memory-management.html
 
 
-Copyright (C) 2013-2019  Yong-Jun Lin
-This file is part of MarkStim, a TMS trigger/EEG event registration 
-device. See <https://yongjunlin.com/MarkStim/> for the documentation 
+Copyright (C) 2013-2020  Yong-Jun Lin
+This file is part of MarkStim, a TMS trigger/EEG event registration
+device. See <https://yongjunlin.com/MarkStim/> for the documentation
 and details.
 
 This program is free software: you can redistribute it and/or modify
@@ -102,7 +103,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 //#include <stdio.h>   /* Standard input/output definitions */
 #include <string.h>  /* String function definitions */
-//#include <unistd.h>  /* UNIX standard function definitions */
+#include <unistd.h>  /* UNIX standard function definitions */
 #include <fcntl.h>   /* File control definitions */
 //#include <errno.h>   /* Error number definitions */
 #include <termios.h> /* POSIX terminal control definitions */
@@ -139,16 +140,16 @@ int openPort (char *deviceNamePath)
 void configurePort (int fd, long baudRate)
 {
 	struct termios options;
-	
+
 	tcgetattr(fd, &options);
 	cfsetispeed(&options, B57600);
 	cfsetospeed(&options, B57600);
-	
+
 	options.c_cflag &= ~PARENB;
 	options.c_cflag &= ~CSTOPB;
 	options.c_cflag &= ~CSIZE;
 	options.c_cflag |= CS8;
-	options.c_cflag |= (CLOCAL | CREAD);	
+	options.c_cflag |= (CLOCAL | CREAD);
 //	options.c_cc[VMIN] = 1;	//blocking until read
 
 	//https://www.cmrr.umn.edu/~strupp/serial.html
@@ -159,7 +160,7 @@ void configurePort (int fd, long baudRate)
 		close(fd);
 		mexErrMsgTxt("Error setting tty attributes.");
 	}
-	
+
 	if (tcgetattr(fd, &options) == -1)
 	{
 		close(fd);
@@ -192,7 +193,7 @@ void mexFunction(int nlhs,mxArray *plhs[],int nrhs, const mxArray *prhs[])
 	// check for proper number of arguments
 	if (nrhs < 1)
 		mexErrMsgTxt("At least one inputs required (string) for the subcommand: '(o)pen', '(r)ead', '(w)rite', or '(c)'lose.");
-	else if (nlhs > 0) 
+	else if (nlhs > 0)
 		mexErrMsgTxt("This mex file does not support output arguments.");
 
 	// First input must be a string
@@ -202,7 +203,7 @@ void mexFunction(int nlhs,mxArray *plhs[],int nrhs, const mxArray *prhs[])
 	if (deviceID == NULL)
 	{
 		/* since deviceID is initialized to NULL, we know
-		this is the first call of the MEX-function 
+		this is the first call of the MEX-function
 		after it was loaded.  Therefore, we should
 		set up deviceID and the exit function. */
 		/* Allocate array. Use mexMackMemoryPersistent to make the allocated memory persistent in subsequent calls*/
@@ -237,12 +238,12 @@ void mexFunction(int nlhs,mxArray *plhs[],int nrhs, const mxArray *prhs[])
 		//deviceID[0] = 999;	//Assign arbitrary number for debugging
 		deviceID[0] = (long) openPort(strParamBuf);	// Open serial port
 		configurePort((int) deviceID[0], baudRate);	// Configure serial port
-		
+
 		// Handshaking
 		int ret = 0;
 		if (strcmp(subCmd, "i") == 0)
 		{
-			// Serial communication			
+			// Serial communication
 			ret = write(deviceID[0], "!", 1);
 			if (ret < 0)
 				mexErrMsgTxt("write() error during handshake");
@@ -257,10 +258,17 @@ void mexFunction(int nlhs,mxArray *plhs[],int nrhs, const mxArray *prhs[])
 			else
 				mexPrintf("Read %d byte(s)\n", ret);
 #endif
+#ifdef __linux__
+			if (ret != strlen("Teensy ready")+1)
+				mexErrMsgTxt("Number of bytes returned is wrong during handshake");
+			if (strcmp(buf, "Teensy ready\n") == 0)
+				mexPrintf("Successful handshake.\n");
+#else
 			if (ret != strlen("Teensy ready")+2)
 				mexErrMsgTxt("Number of bytes returned is wrong during handshake");
 			if (strcmp(buf, "Teensy ready\r\n") == 0)
 				mexPrintf("Successful handshake.\n");
+#endif
 		}
 
 		// Free memory
@@ -374,7 +382,7 @@ void mexFunction(int nlhs,mxArray *plhs[],int nrhs, const mxArray *prhs[])
 	else if (strcmp(subCmd, "x") == 0)
 	{
 		// Resetting
-		// Serial communication			
+		// Serial communication
 		ret = write(deviceID[0], "`", 1);
 		if (ret < 0)
 			mexErrMsgTxt("write() error during handshake");

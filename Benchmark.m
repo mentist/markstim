@@ -1,7 +1,7 @@
 % Version: 2018-01-09~2018-01-11
 % Author: Yong-Jun Lin
 %
-% Copyright (C) 2013-2019  Yong-Jun Lin
+% Copyright (C) 2013-2020  Yong-Jun Lin
 % This file is part of MarkStim, a TMS trigger/EEG event registration 
 % device. See <https://yongjunlin.com/MarkStim/> for the documentation 
 % and details.

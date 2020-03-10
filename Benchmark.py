@@ -9,7 +9,7 @@ References:
  http://neophob.com/2011/04/serial-latency-teensy-vs-arduino/
 
 
-Copyright (C) 2013-2019  Yong-Jun Lin
+Copyright (C) 2013-2020  Yong-Jun Lin
 This file is part of MarkStim, a TMS trigger/EEG event registration 
 device. See <https://yongjunlin.com/MarkStim/> for the documentation 
 and details.
@@ -34,7 +34,7 @@ import matplotlib.pyplot as pyplot
 
 # Hardware settings
 #port = '/dev/tty.usbmodem411'  # Arduino Uno
-port = '/dev/tty.usbmodem12341' # Teensy++ 2.0
+port = '/dev/tty.usbmodem14321' # Teensy++ 2.0
 baudRate = 57600
 #baudRate = 115200  # Large variance
 # http://pyserial.sourceforge.net/pyserial_api.html
