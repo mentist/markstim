@@ -1,6 +1,6 @@
 Copyright (C) 2013-2020  Yong-Jun Lin
-This file is part of MarkStim, a TMS trigger/EEG event registration 
-device. See <https://yongjunlin.com/MarkStim/> for the documentation 
+This file is part of MarkStim, a TMS triggering/EEG event registering
+device. See <https://yongjunlin.com/MarkStim/> for the documentation
 and details.
 
 This program is free software: you can redistribute it and/or modify
@@ -16,13 +16,45 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+<What's in the package?>
+1. Pictorial circuit diagrams
+   See Wiring/*.png
+	 (Note that this device is based on Teensy, not Arduino for accurate timing.
+	 See also: http://neophob.com/2011/04/serial-latency-teensy-vs-arduino/)
+2. Communication protocol (based on serial communication)
+   Protocol.txt
+3. Teensy code
+   MarkStim.ino
 
-<Installation>
+4. Python code for controlling the MarkStim device
+   MarkStim.py
+5. MATLAB Mex code for controlling the MarkStim device
+   Mex/*
+	 		MarkStim.c					Source code of the MATLAB mex file
+	 	  MarkStim.m					The help file
+			MarkStim.mexa64			Compiled mex file for Linux 64-bit
+			MarkStim.mexmaci		Compiled mex file for Intel-based Mac 32-bit
+			MarkStim.mexmaci64	Compiled mex file for Intel-based Mac 64-bit
+
+6. Benchmarking the timing performance via Python
+   Benchmark.py
+	 (Excellence timing performance with Python)
+7. Benchmarking the timing performance via MATLAB Mex
+   BenchmarkThroughMex.m
+	 (Excellence timing performance with MATLAB Mex)
+8. Benchmarking the timing performance via MATLAB
+   Benchmark.m
+	 (Terrible timing performance  because serial communication is slow through
+	 Java runtime environment. MATLAB users should use the mex file to control
+	 MarkStim.)
+
+<Specifically for MATLAB users>
+[Installation]
 
 The .mex files are written in C and complied for MATLAB. Include them in the MATLAB search path, or put them in the same folder as your experiment script.
 The .m file is the companion help file for the .mex files.
 
-<Operation>
+[Operation]
 In MATLAB, type
 
 	help MarkStim
