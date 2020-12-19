@@ -30,7 +30,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
    MarkStim.py
 5. MATLAB Mex code for controlling the MarkStim device
    Mex/*
-	 		MarkStim.c					Source code of the MATLAB mex file
+	 		MarkStim.c					C source code of the MATLAB mex file
 	 	  MarkStim.m					The help file
 			MarkStim.mexa64			Compiled mex file for Linux 64-bit
 			MarkStim.mexmaci		Compiled mex file for Intel-based Mac 32-bit
@@ -48,15 +48,13 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 	 Java runtime environment. MATLAB users should use the mex file to control
 	 MarkStim.)
 
-<Specifically for MATLAB users>
-[Installation]
+<Python users>
+Grab the MarkStim.py file
 
-The .mex files are written in C and complied for MATLAB. Include them in the MATLAB search path, or put them in the same folder as your experiment script.
-The .m file is the companion help file for the .mex files.
-
-[Operation]
+<MATLAB users>
+Grab a MarkStim.mex* file for your platform along with its help file MarkStim.m
+If the mex file does not work, build from the C MEX file with
+  mex MarkStim.c
 In MATLAB, type
-
 	help MarkStim
-
 to find out the command syntax.
